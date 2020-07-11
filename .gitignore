@@ -1,0 +1,7 @@
+.ipynb_checkpoints/
+.DS_Store/
+.DS_Store
+*.xlsx
+*.icloud
+*.json
+assets/
