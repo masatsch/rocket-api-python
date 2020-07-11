@@ -1,4 +1,4 @@
-# Artist API for Python
+# Rocket API for Python
 
 ```
 $ python Firebase/artist.py
