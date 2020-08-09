@@ -13,7 +13,7 @@ from firebase_admin import firestore
 from google.cloud import storage
 import uuid
 
-def getArtists():
+def getArtists(db):
     print("アーティスト情報を取得します", end="")
     artists_ref = db.collection(u'artists')
     docs = artists_ref.stream()
@@ -30,27 +30,31 @@ def getArtists():
 
     return artists
 
-def updateArtist(id, data):
+def updateArtist(db, id, data):
     ref = db.collection(u'artists').document(id)
     ref.update(data)
 
-def registerArtists():
-    result = subprocess.run(['rm', '-rf', '../assets'])
+def registerArtists(db):
+    result = subprocess.run(['rm', '-rf', './assets'])
+    result = subprocess.run(['mkdir', './assets'])
     result = subprocess.run(['wget', '-O', 'newArtists.xlsx', 'https://docs.google.com/spreadsheets/d/1lgg1_VzzKXYWxwiWHHhzuwhc4eKye2g2QbjyjYMI580/export?gid=0&format=xlsx'])
     print(result)
 
     artists = pd.read_excel("newArtists.xlsx")
-    for key, artist in artistlist.iterrows():
+    for key, artist in artists.iterrows():
         try:
             member = json.loads(artist["member"])
         except:
             print("failed to parse member. The artist is: {}".format(artist["artistName"]))
             continue
         
-        r = requests.get(artist["jacketImageUrl"])
-        image = r.content
-        with open("../assets/{}.jpg".format(artist["artistName"]), "wb") as f:
-            f.write(image)
+        try:
+            r = requests.get(artist["jacketImageUrl"])
+            image = r.content
+            with open("./assets/{}.jpg".format(artist["artistName"]), "wb") as f:
+                f.write(image)
+        except:
+            print("failed to import jacket image. {}".format(artist["artistName"]))
         
         if artist["registered"]:
             item = {
@@ -86,10 +90,11 @@ def registerArtists():
 
 
 if __name__ == '__main__':
-    cred = credentials.Certificate('livehouse-262123-0b1410885e83.json')
+    cred = credentials.Certificate('./auth.json')
     firebase_admin.initialize_app(cred)
-    storage_client = storage.Client.from_service_account_json('livehouse-262123-0b1410885e83.json')
+    storage_client = storage.Client.from_service_account_json('./auth.json')
     db = firestore.client()
 
-    artists = getArtists()
-    artists.to_excel('../firebase_artists.xlsx')
+    # artists = getArtists(db)
+    # artists.to_excel('./firebase_artists.xlsx')
+    registerArtists(db)
